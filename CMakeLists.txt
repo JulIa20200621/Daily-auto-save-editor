@@ -23,6 +23,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(EditerCalender
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        storagesettingdialog.h storagesettingdialog.cpp storagesettingdialog.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET EditerCalender APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

@@ -83,7 +83,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="actionSave"/>
     <addaction name="actionClear"/>
    </widget>
+   <widget class="QMenu" name="menuSetting">
+    <property name="title">
+     <string>Setting</string>
+    </property>
+    <addaction name="actionStoragePathSetting"/>
+   </widget>
    <addaction name="menuSave"/>
+   <addaction name="menuSetting"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionSave">
@@ -94,6 +101,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="actionClear">
    <property name="text">
     <string>Clear</string>
+   </property>
+  </action>
+  <action name="actionStoragePathSetting">
+   <property name="text">
+    <string>StoragePathSetting</string>
    </property>
   </action>
  </widget>
