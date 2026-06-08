@@ -6,6 +6,12 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include "storagesettingdialog.h" // 记得引入弹窗的头文件
+#include <QDateTime>
+#include <QDir>
+#include <QSettings>
+#include <QCoreApplication>
+
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -28,47 +34,37 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+bool MainWindow::handleSaveAction() {
 
-bool MainWindow::handleSaveAction(){
-    //获取保存文件的位置
-    QString fileName = QFileDialog::getSaveFileName(this, "保存文件", "", "文本文件 (*.txt);;所有文件 (*.*)");
+    QString basePath = getStorageBasePath();
 
-    //如果取消了，直接返回empty
+    ensureStorageDirectoryExists(basePath);
+
+    QString defaultFullPath = basePath + "/editerCalendar_recordings/" + generateFileName();
+    QString fileName = QFileDialog::getSaveFileName(this, "保存文件", defaultFullPath, "文本文件 (*.txt);;所有文件 (*.*)");
+
     if (fileName.isEmpty()) {
         return false;
     }
 
-    //创建文件
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        // 如果打开失败，弹窗警告并结束
-        QMessageBox::warning(this, "错误", "无法打开并写入该文件");
-        return false;
-    }
-
-    //写入ui里面的文字
-    QTextStream out(&file);
-    out << ui->textEdit->toPlainText();
-
-
-    //保存并提示
-    file.close(); // 显式关闭文件是一个好习惯
-    ui->statusbar->showMessage("文件保存成功！", 3000); // 在状态栏显示 3 秒提示
-
-
-    //保存进列表
-    // m_savedFiles.prepend(fileName);
-
-    //重复保存去掉重复路径
-    // m_savedFiles.removeDuplicates();
-
-    //更新显示列表
-    // updateSavedFilesLayout();
-
-    return true;
-
+    // 调用通用的保存函数
+    return saveFile(fileName);
 }
 
+// 新增：专门处理自动保存逻辑
+bool MainWindow::autoSaveAction() {
+    // 1. 获取用户路径
+    QString basePath = getStorageBasePath();
+
+    // 2. 确保文件夹存在
+    ensureStorageDirectoryExists(basePath);
+
+    // 3. 自动生成路径
+    QString targetPath = basePath + "/editerCalendar_recordings/" + generateFileName();
+
+    // 4. 执行写入
+    return saveFile(targetPath);
+}
 
 
 void MainWindow::handleClearAction(){
@@ -101,11 +97,7 @@ bool MainWindow::maybeSave() {
 
     // 修复点：明确处理每一种情况
     if (ret == QMessageBox::Save) {
-        if (m_currentFilePath.isEmpty()) {
-            return handleSaveAction(); // 这里会调用另存为
-        } else {
-            return saveFile(m_currentFilePath); // 这里直接保存
-        }
+        return autoSaveAction();
     } else if (ret == QMessageBox::Cancel) {
         // 关键修复：点击取消，必须返回 false，终止后续的操作（如清空或关闭）
         return false;
@@ -128,8 +120,6 @@ bool MainWindow::saveFile(const QString &fileName) {
     out << ui->textEdit->toPlainText();
     file.close();
 
-    // 更新当前文件路径
-    m_currentFilePath = fileName;
 
     // 关键：告诉Qt“现在文件已经保存好了，不是被修改过的状态”
     // 这样下次就不会再弹窗烦你了！
@@ -139,15 +129,45 @@ bool MainWindow::saveFile(const QString &fileName) {
     return true; // 保存成功
 }
 
-//加入设置存储路线的弹窗设定
+//储存用户设置的保存路径
 void MainWindow::openSettingsDialog() {
-    StorageSettingDialog dlg(this); // 创建弹窗实例
-    if (dlg.exec() == QDialog::Accepted) {
-        // 弹窗关闭后，如果用户点了“确定”，你可以在这里刷新主窗口的状态
-        ui->statusbar->showMessage("设置已更新", 2000);
+    StorageSettingDialog dlg(this); // 1. 创建弹窗实例
+
+    if (dlg.exec() == QDialog::Accepted) { // 2. 如果用户在弹窗里点了“确定”
+
+        // 3. 【获取】从弹窗的出口函数拿到了用户选好的新路径
+        QString newPath = dlg.getSelectedPath();
+
+        // 4. 【保存】统一用 "EditerCalender" 这个小本本永久写入硬盘
+        QSettings settings("MyCompany", "EditerCalender");
+        settings.setValue("storagePath", newPath);
+
+        ui->statusbar->showMessage("存储路径已更新", 2000);
     }
 }
 
 
+//自动给一个名字
+QString MainWindow::generateFileName() {
+    // 格式：2026-06-07_18-30-05.txt
+    QString timeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss");
+    return timeStr + ".txt";
+}
 
+
+
+void MainWindow::ensureStorageDirectoryExists(const QString &basePath) {
+    QString fullPath = basePath + "/editerCalendar_recordings";
+    QDir dir;
+    if (!dir.exists(fullPath)) {
+        dir.mkpath(fullPath); // 如果文件夹不存在，自动创建（支持多级目录）
+    }
+}
+
+
+// 获取用户的保存路径
+QString MainWindow::getStorageBasePath() const {
+    QSettings settings("MyCompany", "EditerCalender");
+    return settings.value("storagePath", QCoreApplication::applicationDirPath()).toString();
+}
 

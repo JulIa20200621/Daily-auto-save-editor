@@ -20,6 +20,10 @@ private slots:
     bool maybeSave();//判断文件是否发生改动
     bool saveFile(const QString &fileName); // 核心：专门负责写入的函数
     void openSettingsDialog();
+    QString generateFileName();
+    void ensureStorageDirectoryExists(const QString &basePath);
+    bool autoSaveAction();
+    QString getStorageBasePath() const;
 
 
 
@@ -30,6 +34,5 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    QString m_currentFilePath; // 用来存当前打开的文件路径
 };
 #endif // MAINWINDOW_H

@@ -10,7 +10,7 @@ StorageSettingDialog::StorageSettingDialog(QWidget *parent)
     ui->setupUi(this);
 
     // 1. 读取旧路径并显示（如果已经设置过）
-    QSettings settings("MyCompany", "EditerCalender"); // 建议用你的项目名
+    QSettings settings("MyCompany", "EditerCalender");
     QString path = settings.value("storagePath", "").toString();
     ui->pathLineEdit->setText(path);
 
@@ -22,15 +22,15 @@ StorageSettingDialog::StorageSettingDialog(QWidget *parent)
         }
     });
 
-    // 3. 绑定“OK”按钮点击后的保存逻辑
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [=](){
-        QSettings settings("MyCompany", "EditerCalender");
-        settings.setValue("storagePath", ui->pathLineEdit->text());
-    });
 }
+
 
 StorageSettingDialog::~StorageSettingDialog()
 {
     delete ui;
+}
+
+QString StorageSettingDialog::getSelectedPath() const {
+    return ui->pathLineEdit->text(); // 直接把界面输入框里的文本返回出去
 }
 
